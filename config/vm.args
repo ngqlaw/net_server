@@ -1,0 +1,12 @@
+-name net_server@127.0.0.1
+
+-setcookie net_server_cookie
+
+-hidden
+-smp auto
++K true
++A30
++C multi_time_warp
++e 102400
++P 500000
++Q 102400

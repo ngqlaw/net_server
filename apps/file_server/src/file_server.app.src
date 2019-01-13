@@ -1,0 +1,18 @@
+{application, file_server, [
+    {description, "An OTP application"},
+    {vsn, "0.1.0"},
+    {registered, []},
+    {mod, { file_server_app, []}},
+    {applications, [
+        kernel,
+        stdlib,
+        lager,
+        cowboy
+    ]},
+    {env,[]},
+    {modules, []},
+
+    {maintainers, []},
+    {licenses, ["Apache 2.0"]},
+    {links, []}
+]}.

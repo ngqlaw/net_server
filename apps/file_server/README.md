@@ -1,4 +1,4 @@
-net_server
+file_server
 =====
 
 An OTP application

@@ -1,0 +1,22 @@
+{application, net_server, [
+    {description, "An OTP application"},
+    {vsn, "0.1.0"},
+    {registered, []},
+    {mod, { net_server_app, []}},
+    {applications, [
+        kernel,
+        stdlib,
+        sasl,
+        lager,
+        crypto,
+        observer,
+        runtime_tools,
+        file_server
+    ]},
+    {env,[]},
+    {modules, []},
+
+    {maintainers, []},
+    {licenses, ["Apache 2.0"]},
+    {links, []}
+]}.
