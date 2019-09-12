@@ -31,18 +31,14 @@ open_content(Content) ->
 
     % prase string table info
     SharedStringsBinary = proplists:get_value("xl/sharedStrings.xml", ExcelData),
-    lager:debug("data keys:~p", [proplists:get_keys(ExcelData)]),
     {SharedStringsDoc, _} = xmerl_scan:string(erlang:binary_to_list(SharedStringsBinary)),
-    lager:debug("string:~p", [SharedStringsDoc]),
     SharedStringXML = xmerl_xpath:string("/sst/si/t", SharedStringsDoc),
-    lager:debug("string xml:~p", [SharedStringXML]),
     {ok, StringTable} = new_excel_string_table(SharedStringXML),
 
     % parse sheets info
     WorkbookBinary = proplists:get_value("xl/workbook.xml", ExcelData),
     {WorkbookDoc, _} = xmerl_scan:string(erlang:binary_to_list(WorkbookBinary)),
     [#xmlElement{content = SheetsXML}] = xmerl_xpath:string("/workbook/sheets", WorkbookDoc),
-    lager:debug("sheets:~p", [SheetsXML]),
     SheetInfos = [new_excel_sheet(SheetXML)||SheetXML <- SheetsXML],
 
     % load sheets data
@@ -54,7 +50,6 @@ open_content(Content) ->
             SheetDataBinary ->
                 {SheetDataDoc, _} = xmerl_scan:string(erlang:binary_to_list(SheetDataBinary)),
                 [#xmlElement{content = RowsXML}] = xmerl_xpath:string("/worksheet/sheetData", SheetDataDoc),
-                lager:debug("rows:~p", [RowsXML]),
                 Rows = [new_excel_row(RowXML, StringTable) || RowXML<-RowsXML],
                 [SheetInfo#excel_sheet{rows = Rows}|AccIn]
         end
@@ -83,18 +78,26 @@ new_excel_cell(#xmlElement{
         content = [#xmlElement{content = [#xmlText{value = V}]}]
     }, StringTable) ->
     {value, #xmlAttribute{value = C}} = lists:keysearch(r, #xmlAttribute.name, Attrs),
+    Line = change_to_num(C, 0),
     case lists:keysearch(t, #xmlAttribute.name, Attrs) of
-        false ->
-            #excel_cell{c = C, v = V};
         {value, #xmlAttribute{value = _}} ->
             case catch dict:fetch(list_to_integer(V), StringTable) of
-                {'EXIT', _Error} -> NewV = <<"undefined">>;
-                NewV -> ok
-            end,
-            #excel_cell{c = C, v = NewV}
+                {'EXIT', _Error} ->
+                    #excel_cell{c = Line, v = <<"undefined">>};
+                NewV ->
+                    #excel_cell{c = Line, v = NewV}
+            end;
+        false ->
+            #excel_cell{c = Line, v = V}
     end;
 new_excel_cell(#xmlElement{
         attributes = Attrs
     }, _StringTable) ->
     {value, #xmlAttribute{value = C}} = lists:keysearch(r, #xmlAttribute.name, Attrs),
-    #excel_cell{c = C, v = <<"undefined">>}.
+    #excel_cell{c = change_to_num(C, 0), v = <<"undefined">>}.
+
+%% 转换列数
+change_to_num([H|T], Res) when H >= 65 andalso H =< 90 ->
+    change_to_num(T, Res * 26 + (H - 64));
+change_to_num(_, Res) ->
+    Res.

@@ -13,8 +13,7 @@ handle_req(Req, Res) ->
     case cowboy_req:read_part(Req) of
         {ok, Headers, Req2} ->
             {ok, Data, Req3} = cowboy_req:read_part_body(Req2),
-            {file, <<"inputfile">>, Filename, ContentType} = cow_multipart:form_data(Headers),
-            lager:debug("Received file ~p of content-type ~p~n", [Filename, ContentType]),
+            {file, <<"inputfile">>, Filename, _ContentType} = cow_multipart:form_data(Headers),
             {ok, Info} = lib_excel:open_content(Data),
             handle_req(Req3, [{Filename, Info}|Res]);
         {done, Req1} ->
